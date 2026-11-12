@@ -29,6 +29,26 @@ Keep the output outside the source vault and in a private directory. The tool re
 
 A creative workflow: inspect isolated drafts, connect related lyrics and poems intentionally, resolve ambiguous titles, then review duplicates manually. The tool makes no changes and never merges notes.
 
+## Try an undo-free cleanup rehearsal
+
+Before removing an index or duplicate draft, preview its structural consequences:
+
+```sh
+python vaultmap.py examples/vault --without 'Rain song.md' --without 'Index.md'
+```
+
+`removal_preview` reports remaining components, original groups split into fragments,
+newly isolated notes, and resolved incoming links whose destination would disappear.
+`--without` accepts exact case-sensitive inventory IDs, not ambiguous shorthand;
+repeat it to test a batch. Unknown IDs fail rather than silently doing nothing.
+
+This is **graph-only counterfactual analysis**, not a deletion command or approval to
+delete. No source changes occur. A previously ambiguous link is not re-resolved after
+a simulated removal, and existing unresolved links remain outside the simulation.
+The report cannot decide which version of a poem has artistic value. Review the
+reported affected links, make a backup, and perform any actual cleanup separately.
+The method uses ordinary graph connected components, not a new AI algorithm.
+
 ## Privacy and safety
 
 The report omits note bodies, but **filenames, link targets, hashes and notebook structure can still be sensitive**. It is not anonymized. Do not commit real reports or vaults to GitHub. Only synthetic material belongs in this repository.

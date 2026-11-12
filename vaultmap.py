@@ -124,12 +124,66 @@ def analyze(root):
             'exact_duplicates': sorted(sorted(v) for v in hashes.values() if len(v) > 1)}
 
 
+def preview_removal(report, excluded):
+    """Simulate removing exact note IDs from the existing graph; never change files.
+
+    Graph-only projection: remaining links are NOT re-resolved, so previously
+    ambiguous links do not become resolved after a hypothetical removal.
+    """
+    excluded = set(excluded)
+    original = {note['id'] for note in report['notes']}
+    unknown = excluded - original
+    if unknown:
+        raise ValueError('Unknown exact note ID(s): ' + ', '.join(sorted(unknown)))
+    remaining = original - excluded
+    graph = {name: set() for name in remaining}
+    affected = []
+    for edge in report['links']:
+        a, b = edge['source'], edge['target']
+        if a in remaining and b in remaining:
+            graph[a].add(b)
+            graph[b].add(a)
+        elif a in remaining and b in excluded:
+            affected.append(dict(edge))
+    components, seen = [], set()
+    for start in sorted(remaining):
+        if start in seen:
+            continue
+        stack, group = [start], []
+        while stack:
+            node = stack.pop()
+            if node in seen:
+                continue
+            seen.add(node)
+            group.append(node)
+            stack.extend(sorted(graph[node] - seen, reverse=True))
+        components.append(sorted(group))
+    component_index = {name: i for i, group in enumerate(components) for name in group}
+    split_groups = []
+    for group in report['components']:
+        indices = sorted({component_index[name] for name in group if name in remaining})
+        if len(indices) > 1:
+            split_groups.append({'original': list(group),
+                                 'fragments': [components[i] for i in indices]})
+    isolated = sorted(name for name, neighbors in graph.items() if not neighbors)
+    return {'mode': 'graph-only-removal-preview', 'removed': sorted(excluded),
+            'remaining_note_count': len(remaining), 'components': components,
+            'split_groups': split_groups,
+            'newly_isolated': sorted(set(isolated) - set(report['isolated'])),
+            'dangling_resolved_links': sorted(affected, key=lambda x: (x['source'], x['target'])),
+            'source_files_modified': False}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('vault', type=Path)
+    parser.add_argument('--without', action='append', default=[], metavar='EXACT_NOTE_ID',
+                        help='Preview graph removal only; repeat to simulate a batch. No files change.')
     args = parser.parse_args(argv)
     try:
         report = analyze(args.vault)
+        if args.without:
+            report['removal_preview'] = preview_removal(report, args.without)
     except (OSError, ValueError, UnicodeError) as exc:
         parser.exit(2, f'Cannot analyze vault: {exc}\n')
     print(json.dumps(report, ensure_ascii=False, indent=2))
