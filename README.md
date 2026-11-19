@@ -57,7 +57,7 @@ Hidden paths and symlinks are excluded. Link destinations are resolved only agai
 
 ## Scope and limitations
 
-This is not a full Markdown parser or an Obsidian plugin. Fenced/inline code and HTML comments are ignored with simple parsing. Reference-style links, complex nested parentheses, multiline link labels, YAML frontmatter semantics, canvas files, assets and embeds are not modeled. Obsidian aliases declared in frontmatter are not indexed. Matching uses Unicode NFC and case-folding for portability; collisions are reported as ambiguous rather than guessed. Wiki links prefer a file in the source directory, then a vault-root path, then a unique basename. Markdown links resolve relative to the source note.
+This is not a full Markdown parser or an Obsidian plugin. Fenced/inline code and HTML comments are ignored with simple parsing. Reference-style links, complex nested parentheses, multiline link labels, YAML frontmatter semantics, canvas files, assets and embeds are not modeled. Obsidian aliases declared in frontmatter are not indexed. Matching uses Unicode NFC and case-folding for portability; collisions are reported as ambiguous rather than guessed. Wiki links prefer a file in the source directory, then a vault-root path, then a unique basename. Markdown links resolve relative to the source note. Use angle brackets for destinations with spaces or parentheses, e.g. `[draft](<../song (draft).md>)`. Link titles and escaped delimiters are not modeled.
 
 Performance is intentionally simple: all Markdown text is read into memory and the graph is built in memory. Start with a modest notebook. No full-text search, semantic similarity, automatic tagging or generative writing is claimed.
 
