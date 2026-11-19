@@ -57,7 +57,9 @@ def analyze(root):
     for source, text in payloads.items():
         text = visible(text)
         links = [(m.group(1).split('|')[0], True) for m in re.finditer(r'(?<!!)\[\[([^\]\n]+)\]\]', text)]
-        links += [(m.group(1), False) for m in re.finditer(r'(?<!!)\[[^\]\n]*\]\(([^\s)]+)\)', text)]
+        # Angle-bracket destinations can contain spaces and parentheses.
+        markdown_link = r'(?<!!)\[[^\]\n]*\]\((?:<([^<>\n]+)>|([^<>\s)]+))\)'
+        links += [(m.group(1) or m.group(2), False) for m in re.finditer(markdown_link, text)]
         for raw, wiki in links:
             target = unquote(raw.split('#')[0]).strip('<> ')
             if not target or re.match(r'^[a-zA-Z][\w+.-]*:', target):

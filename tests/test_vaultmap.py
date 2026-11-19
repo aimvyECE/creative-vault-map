@@ -29,6 +29,18 @@ class VaultTests(unittest.TestCase):
         self.write('song idea.md', 'hello')
         self.assertEqual(len(analyze(self.root)['links']), 1)
 
+    def test_bracketed_markdown_destination(self):
+        self.write('poems/a.md', '[idea](<../song (draft).md#Verse>)')
+        self.write('song (draft).md', '# Verse')
+        self.assertEqual(analyze(self.root)['links'],
+                         [{'source': 'poems/a.md', 'target': 'song (draft).md'}])
+
+    def test_bracketed_markdown_images_and_live_urls_ignored(self):
+        self.write('a.md', '![x](<some image.md>) [x](<https://example.com/a.md>)')
+        report = analyze(self.root)
+        self.assertEqual(report['links'], [])
+        self.assertEqual(report['unresolved'], [])
+
     def test_ambiguous(self):
         self.write('a.md', '[[draft]]')
         self.write('one/draft.md', 'one')
